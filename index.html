@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Family 100 Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: #fff;
+            margin-bottom: 30px;
+        }
+
+        .scores {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+
+        .team-score {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            width: 45%;
+            text-align: center;
+        }
+
+        .team-score h2 {
+            color: #1e3c72;
+            margin-bottom: 10px;
+        }
+
+        .score {
+            font-size: 2.5em;
+            color: #2a5298;
+            font-weight: bold;
+        }
+
+        .game-board {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .answer-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            margin: 10px 0;
+            background: #f0f0f0;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .answer-row.revealed {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .answer-row.wrong {
+            background: #f44336;
+            color: white;
+        }
+
+        .answer-text {
+            visibility: hidden;
+        }
+
+        .revealed .answer-text {
+            visibility: visible;
+        }
+
+        .answer-points {
+            font-weight: bold;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-reset {
+            background: #2196F3;
+            color: white;
+        }
+
+        button:hover {
+            opacity: 0.9;
+            transform: scale(1.05);
+        }
+
+        .strike-count {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .strike {
+            width: 30px;
+            height: 30px;
+            background: #ccc;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .strike.active {
+            background: #f44336;
+            color: white;
+        }
+
+        #questionText {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: #1e3c72;
+            text-align: center;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .modal-content button {
+            margin: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .scores {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .team-score {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>FAMILY 100</h1>
+        </div>
+
+        <div class="scores">
+            <div class="team-score">
+                <h2>Tim 1</h2>
+                <div class="score" id="team1Score">0</div>
+            </div>
+            <div class="team-score">
+                <h2>Tim 2</h2>
+                <div class="score" id="team2Score">0</div>
+            </div>
+        </div>
+
+        <div class="game-board">
+            <div id="questionText"></div>
+            <div id="answersList"></div>
+        </div>
+
+        <div class="strike-count">
+            <div class="strike" id="strike1">X</div>
+            <div class="strike" id="strike2">X</div>
+            <div class="strike" id="strike3">X</div>
+        </div>
+
+        <div class="controls">
+            <button class="btn-primary" onclick="switchTeam()">Ganti Tim</button>
+            <button class="btn-secondary" onclick="addStrike()">Strike</button>
+            <button class="btn-reset" onclick="nextQuestion()">Soal Berikutnya</button>
+            <button class="btn-reset" onclick="resetGame()">Reset Game</button>
+        </div>
+    </div>
+
+    <div id="gameOverModal" class="modal">
+        <div class="modal-content">
+            <h2>Game Over!</h2>
+            <p id="winnerText"></p>
+            <button class="btn-primary" onclick="resetGame()">Main Lagi</button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                question: "Sebutkan buah yang berwarna merah!",
+                answers: [
+                    { text: "Apel", points: 35 },
+                    { text: "Semangka", points: 25 },
+                    { text: "Strawberry", points: 20 },
+                    { text: "Naga", points: 15 },
+                    { text: "Delima", points: 5 }
+                ]
+            },
+            {
+                question: "Sebutkan hewan yang bisa terbang!",
+                answers: [
+                    { text: "Burung", points: 40 },
+                    { text: "Kupu-kupu", points: 25 },
+                    { text: "Lebah", points: 15 },
+                    { text: "Kelelawar", points: 12 },
+                    { text: "Capung", points: 8 }
+                ]
+            },
+            {
+                question: "Sebutkan profesi yang bekerja di rumah sakit!",
+                answers: [
+                    { text: "Dokter", points: 35 },
+                    { text: "Perawat", points: 30 },
+                    { text: "Apoteker", points: 15 },
+                    { text: "Satpam", points: 12 },
+                    { text: "Cleaning Service", points: 8 }
+                ]
+            }
+            // Tambahkan pertanyaan lain sesuai kebutuhan
+        ];
+
+        let currentTeam = 1;
+        let team1Score = 0;
+        let team2Score = 0;
+        let strikes = 0;
+        let currentQuestionIndex = 0;
+        let revealedAnswers = new Set();
+
+        function initializeGame() {
+            displayQuestion(currentQuestionIndex);
+            updateScores();
+            resetStrikes();
+        }
+
+        function displayQuestion(index) {
+            const question = questions[index];
+            document.getElementById('questionText').textContent = question.question;
+            
+            const answersHtml = question.answers.map((answer, idx) => `
+                <div class="answer-row" onclick="revealAnswer(${idx})">
+                    <span class="answer-text">${answer.text}</span>
+                    <span class="answer-points">${answer.points}</span>
+                </div>
+            `).join('');
+            
+            document.getElementById('answersList').innerHTML = answersHtml;
+            revealedAnswers.clear();
+        }
+
+        function revealAnswer(index) {
+            if (revealedAnswers.has(index)) return;
+
+            const answerRows = document.querySelectorAll('.answer-row');
+            answerRows[index].classList.add('revealed');
+            revealedAnswers.add(index);
+
+            const points = questions[currentQuestionIndex].answers[index].points;
+            if (currentTeam === 1) {
+                team1Score += points;
+            } else {
+                team2Score += points;
+            }
+
+            updateScores();
+            checkForRoundEnd();
+        }
+
+        function switchTeam() {
+            currentTeam = currentTeam === 1 ? 2 : 1;
+            const teamScores = document.querySelectorAll('.team-score');
+            teamScores.forEach(score => score.style.transform = 'scale(1)');
+            teamScores[currentTeam - 1].style.transform = 'scale(1.05)';
+        }
+
+        function addStrike() {
+            strikes++;
+            updateStrikes();
+            
+            if (strikes >= 3) {
+                switchTeam();
+                resetStrikes();
+            }
+        }
+
+        function updateStrikes() {
+            for (let i = 1; i <= 3; i++) {
+                const strikeElement = document.getElementById(`strike${i}`);
+                strikeElement.classList.toggle('active', i <= strikes);
+            }
+        }
+
+        function resetStrikes() {
+            strikes = 0;
+            updateStrikes();
+        }
+
+        function updateScores() {
+            document.getElementById('team1Score').textContent = team1Score;
+            document.getElementById('team2Score').textContent = team2Score;
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex >= questions.length) {
+                endGame();
+            } else {
+                displayQuestion(currentQuestionIndex);
+                resetStrikes();
+            }
+        }
+
+        function endGame() {
+            const modal = document.getElementById('gameOverModal');
+            const winnerText = document.getElementById('winnerText');
+            
+            if (team1Score > team2Score) {
+                winnerText.textContent = `Tim 1 Menang! (${team1Score} vs ${team2Score})`;
+            } else if (team2Score > team1Score) {
+                winnerText.textContent = `Tim 2 Menang! (${team2Score} vs ${team1Score})`;
+            } else {
+                winnerText.textContent = `Seri! (${team1Score} vs ${team2Score})`;
+            }
+            
+            modal.style.display = 'block';
+        }
+
+        function resetGame() {
+            currentQuestionIndex = 0;
+            team1Score = 0;
+            team2Score = 0;
+            currentTeam = 1;
+            strikes = 0;
+            
+            document.getElementById('gameOverModal').style.display = 'none';
+            initializeGame();
+        }
+
+        // Initialize the game when the page loads
+        initializeGame();
+    </script>
+</body>
+</html>

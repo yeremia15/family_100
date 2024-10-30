@@ -174,21 +174,31 @@
             {
                 question: "Sebutkan makanan yang biasa dimakan saat sarapan",
                 answers: [
-                    { text: "Nasi Goreng", points: 35 },
+                    { text: "Bubur", points: 35 },
                     { text: "Roti", points: 25 },
-                    { text: "Bubur", points: 20 },
-                    { text: "Telur", points: 15 },
-                    { text: "Mie", points: 5 },
+                    { text: "Nasi Uduk", points: 20 },
+                    { text: "Mie", points: 15 },
+                    { text: "Oatmeal", points: 5 },
+                ]
+            },
+            {
+                question: "Selain konten lucu, konten apalagi yang disukai oleh bapak-bapak",
+                answers: [
+                    { text: "Olahraga", points: 35 },
+                    { text: "Otomotif", points: 30 },
+                    { text: "Berita", points: 20 },
+                    { text: "Politik", points: 15 },
+                    { text: "Religi", points: 10 },
                 ]
             },
             {
                 question: "Sebutkan benda yang selalu dibawa saat bepergian",
                 answers: [
-                    { text: "Handphone", points: 30 },
-                    { text: "Dompet", points: 25 },
-                    { text: "Kunci", points: 20 },
-                    { text: "Tas", points: 15 },
-                    { text: "Tisu", points: 10 },
+                    { text: "Handphone", points: 40 },
+                    { text: "Dompet", points: 30 },
+                    { text: "Kunci", points: 25 },
+                    { text: "Tas", points: 20 },
+                    { text: "Tisu", points: 15 },
                 ]
             }
         ];
@@ -201,7 +211,7 @@
             strikes: 0,
             currentQuestion: 0,
             revealedAnswers: [],
-            isLastChance: false
+            isThrown: false
         };
 
         const team1ScoreElement = document.getElementById('team1Score');
@@ -225,7 +235,7 @@
                 strikes: 0,
                 currentQuestion: 0,
                 revealedAnswers: [],
-                isLastChance: false
+                isThrown: false
             };
             updateDisplay();
             loadQuestion();
@@ -270,17 +280,27 @@
         }
 
         function addStrike() {
-            if (currentState.strikes >= 3) return;
-            document.getElementById('strikeSound').play();
+            const strikeSound = document.getElementById('strikeSound');
+            strikeSound.play();
             showStrikePopup();
             currentState.strikes++;
             updateDisplay();
-            if (currentState.strikes === 3 && !currentState.isLastChance) {
-                currentState.isLastChance = true;
+
+            if (currentState.strikes === 3 && !currentState.isThrown) {
+                currentState.isThrown = true;
+                currentState.strikes = 0;
                 currentState.activeTeam = currentState.activeTeam === 1 ? 2 : 1;
-                alert(`Tim ${currentState.activeTeam} mendapat kesempatan terakhir!`);
-            } else if (currentState.strikes === 3 && currentState.isLastChance) {
-                awardPoints();
+                alert(`Tim ${currentState.activeTeam} mendapat kesempatan menjawab!`);
+            } else if (currentState.strikes === 1 && currentState.isThrown) {
+                const mainTeam = currentState.activeTeam === 1 ? 2 : 1;
+                if (mainTeam === 1) {
+                    currentState.team1Score += currentState.holdingPoints;
+                } else {
+                    currentState.team2Score += currentState.holdingPoints;
+                }
+                alert(`Tim ${mainTeam} memperoleh poin sebesar ${currentState.holdingPoints}!`);
+                currentState.holdingPoints = 0;
+                checkGameOver();
             }
         }
 
@@ -312,8 +332,9 @@
                 currentState.revealedAnswers = [];
                 currentState.strikes = 0;
                 currentState.holdingPoints = 0;
-                currentState.isLastChance = false;
+                currentState.isThrown = false;
                 loadQuestion();
+                updateDisplay();
             }
         }
 

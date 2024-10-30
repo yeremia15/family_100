@@ -10,18 +10,15 @@
             margin: 0 auto;
             padding: 20px;
         }
-
         .header {
             text-align: center;
             margin-bottom: 20px;
         }
-
         .scores {
             display: flex;
             justify-content: space-between;
             margin-bottom: 20px;
         }
-
         .team-score {
             text-align: center;
             flex: 1;
@@ -30,21 +27,17 @@
             border: 2px solid #ccc;
             border-radius: 5px;
         }
-
         .active-team {
             border-color: #4CAF50;
             background-color: #e8f5e9;
         }
-
         .score {
             font-size: 2em;
             font-weight: bold;
         }
-
         .game-board {
             margin-bottom: 20px;
         }
-
         .answer-row {
             display: flex;
             justify-content: space-between;
@@ -53,25 +46,21 @@
             background-color: #f5f5f5;
             border-radius: 5px;
         }
-
         .answer-hidden {
             background-color: #2196F3;
             color: white;
             cursor: pointer;
         }
-
         .answer-revealed {
             background-color: #4CAF50;
             color: white;
         }
-
         .strike-count {
             display: flex;
             justify-content: center;
             gap: 10px;
             margin-bottom: 20px;
         }
-
         .strike {
             width: 30px;
             height: 30px;
@@ -83,17 +72,14 @@
             border-radius: 50%;
             opacity: 0.3;
         }
-
         .strike.active {
             opacity: 1;
         }
-
         .controls {
             display: flex;
             gap: 10px;
             justify-content: center;
         }
-
         .button {
             padding: 10px 20px;
             border: none;
@@ -101,27 +87,22 @@
             cursor: pointer;
             font-size: 1em;
         }
-
         .team-button {
             background-color: #2196F3;
             color: white;
         }
-
         .strike-button {
             background-color: #f44336;
             color: white;
         }
-
         .next-button {
             background-color: #4CAF50;
             color: white;
         }
-
         .reset-button {
             background-color: #9e9e9e;
             color: white;
         }
-
         .modal {
             display: none;
             position: fixed;
@@ -131,7 +112,6 @@
             height: 100%;
             background-color: rgba(0, 0, 0, 0.5);
         }
-
         .modal-content {
             position: absolute;
             top: 50%;
@@ -149,7 +129,6 @@
         <div class="header">
             <h1>FAMILY 100</h1>
         </div>
-
         <div class="scores">
             <div class="team-score" id="team1Container">
                 <h2>Tim 1</h2>
@@ -160,18 +139,15 @@
                 <div id="team2Score" class="score">0</div>
             </div>
         </div>
-
         <div class="game-board">
             <div id="questionText"></div>
             <div id="answersList"></div>
         </div>
-
         <div class="strike-count">
             <div id="strike1" class="strike">X</div>
             <div id="strike2" class="strike">X</div>
             <div id="strike3" class="strike">X</div>
         </div>
-
         <div class="controls">
             <button id="team1Button" class="button team-button">Tim 1</button>
             <button id="team2Button" class="button team-button">Tim 2</button>
@@ -180,16 +156,20 @@
             <button id="resetButton" class="button reset-button">Reset Game</button>
         </div>
     </div>
-
     <div id="gameOverModal" class="modal">
         <div class="modal-content">
             <h2>Game Over!</h2>
             <button id="playAgainButton" class="button next-button">Main Lagi</button>
         </div>
     </div>
-
+    <div id="strikePopup" class="modal">
+        <div class="modal-content" style="color: red; font-size: 2em;">
+            X
+        </div>
+    </div>
+    <audio id="correctSound" src="correct.mp3"></audio>
+    <audio id="strikeSound" src="strike.mp3"></audio>
     <script>
-        // Game data
         const questions = [
             {
                 question: "Sebutkan makanan yang biasa dimakan saat sarapan",
@@ -211,10 +191,8 @@
                     { text: "Tisu", points: 10 },
                 ]
             }
-            // Add more questions as needed
         ];
 
-        // Game state
         let currentState = {
             activeTeam: 1,
             team1Score: 0,
@@ -226,7 +204,6 @@
             isLastChance: false
         };
 
-        // DOM Elements
         const team1ScoreElement = document.getElementById('team1Score');
         const team2ScoreElement = document.getElementById('team2Score');
         const team1Container = document.getElementById('team1Container');
@@ -239,7 +216,6 @@
             document.getElementById('strike3')
         ];
 
-        // Initialize game
         function initGame() {
             currentState = {
                 activeTeam: 1,
@@ -255,52 +231,50 @@
             loadQuestion();
         }
 
-        // Load question
         function loadQuestion() {
             const question = questions[currentState.currentQuestion];
             questionText.textContent = question.question;
             answersList.innerHTML = '';
-            
             question.answers.forEach((answer, index) => {
                 const answerRow = document.createElement('div');
                 answerRow.className = 'answer-row answer-hidden';
                 answerRow.dataset.index = index;
                 answerRow.textContent = `${index + 1}`;
-                
                 answerRow.addEventListener('click', () => revealAnswer(index));
                 answersList.appendChild(answerRow);
             });
         }
 
-        // Reveal answer
         function revealAnswer(index) {
             if (currentState.revealedAnswers.includes(index)) return;
-
+            document.getElementById('correctSound').play();
             const question = questions[currentState.currentQuestion];
             const answer = question.answers[index];
             const answerRow = answersList.children[index];
-
             currentState.revealedAnswers.push(index);
             answerRow.className = 'answer-row answer-revealed';
             answerRow.textContent = `${answer.text} - ${answer.points}`;
-            
             currentState.holdingPoints += answer.points;
-            
-            // Check if all answers are revealed
             if (currentState.revealedAnswers.length === question.answers.length) {
                 awardPoints();
             }
-
             updateDisplay();
         }
 
-        // Add strike
+        function showStrikePopup() {
+            const strikePopup = document.getElementById('strikePopup');
+            strikePopup.style.display = 'block';
+            setTimeout(() => {
+                strikePopup.style.display = 'none';
+            }, 1000);
+        }
+
         function addStrike() {
             if (currentState.strikes >= 3) return;
-            
+            document.getElementById('strikeSound').play();
+            showStrikePopup();
             currentState.strikes++;
             updateDisplay();
-
             if (currentState.strikes === 3 && !currentState.isLastChance) {
                 currentState.isLastChance = true;
                 currentState.activeTeam = currentState.activeTeam === 1 ? 2 : 1;
@@ -310,7 +284,6 @@
             }
         }
 
-        // Award points
         function awardPoints() {
             if (currentState.activeTeam === 1) {
                 currentState.team1Score += currentState.holdingPoints;
@@ -321,20 +294,29 @@
             updateDisplay();
         }
 
-        // Update display
         function updateDisplay() {
             team1ScoreElement.textContent = currentState.team1Score;
             team2ScoreElement.textContent = currentState.team2Score;
-            
             team1Container.classList.toggle('active-team', currentState.activeTeam === 1);
             team2Container.classList.toggle('active-team', currentState.activeTeam === 2);
-
             strikeElements.forEach((element, index) => {
                 element.classList.toggle('active', index < currentState.strikes);
             });
         }
 
-        // Event listeners
+        function checkGameOver() {
+            if (currentState.currentQuestion >= questions.length - 1) {
+                document.getElementById('gameOverModal').style.display = 'block';
+            } else {
+                currentState.currentQuestion++;
+                currentState.revealedAnswers = [];
+                currentState.strikes = 0;
+                currentState.holdingPoints = 0;
+                currentState.isLastChance = false;
+                loadQuestion();
+            }
+        }
+
         document.getElementById('team1Button').addEventListener('click', () => {
             currentState.activeTeam = 1;
             updateDisplay();
@@ -349,23 +331,14 @@
             addStrike();
         });
 
-        document.getElementById('nextButton').addEventListener('click', () => {
-            currentState.currentQuestion++;
-            if (currentState.currentQuestion >= questions.length) {
-                currentState.currentQuestion = 0;
-            }
-            currentState.revealedAnswers = [];
-            currentState.strikes = 0;
-            currentState.holdingPoints = 0;
-            currentState.isLastChance = false;
-            loadQuestion();
-            updateDisplay();
-        });
+        document.getElementById('nextButton').addEventListener('click', checkGameOver);
 
         document.getElementById('resetButton').addEventListener('click', initGame);
-        document.getElementById('playAgainButton').addEventListener('click', initGame);
+        document.getElementById('playAgainButton').addEventListener('click', () => {
+            document.getElementById('gameOverModal').style.display = 'none';
+            initGame();
+        });
 
-        // Start the game
         initGame();
     </script>
 </body>

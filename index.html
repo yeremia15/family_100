@@ -7,6 +7,16 @@
     <link rel="icon" type="image/png" href="image/favicon.png">
     <title>Family 100</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(to bottom right, #e3f2fd, #e8f5e9);
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
         .container {
             max-width: 800px;
             margin: 0 auto;
@@ -16,6 +26,14 @@
         .header {
             text-align: center;
             margin-bottom: 20px;
+        }
+
+        .header h1 {
+            background: linear-gradient(45deg, #2196F3, #4CAF50);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 3em;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
         }
 
         .scores {
@@ -31,6 +49,8 @@
             padding: 10px;
             border: 2px solid #ccc;
             border-radius: 5px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
         }
 
         .active-team {
@@ -54,6 +74,12 @@
             padding: 10px;
             background-color: #f5f5f5;
             border-radius: 5px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease-in-out;
+        }
+
+        .answer-row:hover {
+            transform: scale(1.02);
         }
 
         .answer-hidden {
@@ -63,8 +89,9 @@
         }
 
         .answer-revealed {
-            background-color: #4CAF50;
+            background: linear-gradient(45deg, #4CAF50, #81C784);
             color: white;
+            font-weight: bold;
         }
 
         .strike-count {
@@ -94,6 +121,7 @@
             display: flex;
             gap: 10px;
             justify-content: center;
+            flex-wrap: wrap;
         }
 
         .button {
@@ -102,6 +130,12 @@
             border-radius: 5px;
             cursor: pointer;
             font-size: 1em;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+
+        .button:hover {
+            transform: scale(1.05);
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
         }
 
         .team-button {
@@ -143,6 +177,19 @@
             padding: 20px;
             border-radius: 5px;
             text-align: center;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        @media (max-width: 600px) {
+            .scores {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .button {
+                width: 100%;
+                text-align: center;
+            }
         }
     </style>
 </head>
@@ -164,7 +211,9 @@
             </div>
         </div>
         <div class="game-board">
-            <b style="font-size: large;"><div align="center" id="questionText"></div></b>
+            <b style="font-size: large;">
+                <div align="center" id="questionText"></div>
+            </b>
             <div id="answersList"></div>
         </div>
         <div class="strike-count">
@@ -405,13 +454,9 @@
             answerRow.className = 'answer-row answer-revealed';
             answerRow.textContent = `${answer.text} - ${answer.points}`;
 
-            // Kondisi normal sebelum lemparan
             if (!currentState.isThrown) {
                 currentState.holdingPoints += answer.points;
-            }
-            // Jika sudah pada kondisi lemparan
-            else {
-                // Jika masih dalam tahap tim lemparan dapat poin
+            } else {
                 if (!currentState.throwPointsCalculated) {
                     currentState.team1Score = currentState.activeTeam === 1 ? currentState.team1Score + currentState
                         .holdingPoints + answer.points : currentState.team1Score;
@@ -419,14 +464,11 @@
                         .holdingPoints + answer.points : currentState.team2Score;
                     currentState.throwPointsCalculated = true;
                     currentState.holdingPoints = 0;
-                }
-                // Jika sudah selesai poin, buka jawaban tanpa mempengaruhi poin
-                else {
+                } else {
                     console.log('Jawaban dibuka tanpa mempengaruhi poin');
                 }
             }
 
-            // Cek jika semua jawaban sudah terbuka
             if (currentState.revealedAnswers.length === question.answers.length) {
                 if (!currentState.isThrown) {
                     awardPoints();
@@ -453,7 +495,7 @@
 
             if (currentState.strikes === 3 && !currentState.isThrown) {
                 currentState.isThrown = true;
-                currentState.throwPointsCalculated = false; // Reset flag
+                currentState.throwPointsCalculated = false;
                 currentState.strikes = 0;
                 currentState.activeTeam = currentState.activeTeam === 1 ? 2 : 1;
                 alert(`Tim ${currentState.activeTeam} mendapat kesempatan menjawab!`);
